@@ -47,16 +47,6 @@ app.listen(PORT, ()=>console.log(`city explorer back end Listening on PORT ${POR
 // d. add newly added location id to the location object
 // e. return the location to front end
 
-// function searchToLatLong(request, response){
-//   //giving url for Geocode Api
-//   const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${request.query.data}&key=${process.env.GEOCODE_API_KEY}`;
-//   superagent.get(url)
-//     .then(result => {
-//       const location = new Location(request.query.data, result);
-//       response.send(location);
-//     })
-//     .catch(err => handleError(err, response));
-// }
 
 function searchToLatLong(request, response){
   let query = request.query.data;
@@ -75,9 +65,13 @@ function searchToLatLong(request, response){
       if (result.rowCount > 0) {
         response.send(result.rows[0]);
       }else {
+        console.log('results', result.rows);
         //otherwise go get the data from the api
         const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${request.query.data}&key=${process.env.GEOCODE_API_KEY}`;
+        console.log(url);
         superagent.get(url)
+
+
           .then(result => {
             if (!result.body.results.length) {throw 'NO DATA';}
             else {
@@ -107,18 +101,6 @@ function Location(query, location) {
   this.longitude = location.geometry.location.lng;
 }
 
-// function getWeather(request, response) {
-//   //give url for Darksky API
-//   const url = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
-
-//   superagent.get(url)
-//     .then(result => {
-//       const weatherSummaries = result.body.daily.data.map(day => new Weather(day));
-//       response.send(weatherSummaries);
-//       // getEvent();
-//     })
-//     .catch(err => handleError(err, response));
-// }
 
 function getWeather(request, response) {
   let query = request.query.data.id;
