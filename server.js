@@ -111,7 +111,7 @@ function getWeather(request, response) {
     .then (result => {
       if (result.rowCount > 0) {
         console.log('Weather from SQL');
-        response.send(results.rows);
+        response.send(result.rows);
 
 
       } else {
