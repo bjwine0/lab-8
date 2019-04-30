@@ -125,13 +125,13 @@ function Weather(day) {
 
 function getEvent(request, response) {
   let query = request.query.data.id;
-  let sql = `SELECT * FROM weathers WHERE location_id=$1;`;
+  let sql = `SELECT * FROM events WHERE location_id=$1;`;
   let values = [query]; //always array
 
   client.query(sql, values)
     .then (result => {
       if (result.rowCount > 0) {
-        console.log('Weather from SQL');
+        console.log('events from SQL');
         response.send(result.rows);
 
 
