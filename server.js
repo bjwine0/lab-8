@@ -19,34 +19,12 @@ const client = new pg.Client(process.env.DATABASE_URL); // part of posgres libra
 client.connect();
 client.on('error', err => console.log(err));
 
-
-//Incoming API routes
-app.get('/testing', (request, response)=>{
-  response.send('<h1>HELLO WORLD..</h1>')
-
-});
-
 app.get('/location', searchToLatLong)
 app.get('/weather', getWeather);
 app.get('/events', getEvent);
 
 //server listening for requests
 app.listen(PORT, ()=>console.log(`city explorer back end Listening on PORT ${PORT}`));
-
-//Helper Functions
-
-//what we need to do to refactor for sql storage
-// 1.  need to check database to see if location exists
-// a. if exists => get location from database
-// b. return location info to front end
-
-//2. if location not in database
-// a . get location from the api
-// b. run the data through costructor
-// c. save to database
-// d. add newly added location id to the location object
-// e. return the location to front end
-
 
 function searchToLatLong(request, response){
   let query = request.query.data;
@@ -146,16 +124,50 @@ function Weather(day) {
 }
 
 function getEvent(request, response) {
-  //give url for Eventbrite API
+  let query = request.query.data.id;
+  let sql = `SELECT * FROM weathers WHERE location_id=$1;`;
+  let values = [query]; //always array
 
-  const url = `https://www.eventbriteapi.com/v3/events/search/?token=${process.env.EVENTBRITE_API_KEY}&location.latitude=${request.query.data.latitude}&location.longitude=${request.query.data.longitude}`;
-  superagent.get(url)
-    .then(result => {
-      const eventSummaries = result.body.events.map(events => new Event(events));
-      console.log(eventSummaries)
-      response.send(eventSummaries);
-    })
-    .catch(err => handleError(err, response));
+  client.query(sql, values)
+    .then (result => {
+      if (result.rowCount > 0) {
+        console.log('Weather from SQL');
+        response.send(result.rows);
+
+
+      } else {
+        const url = `https://www.eventbriteapi.com/v3/events/search/?token=${process.env.EVENTBRITE_API_KEY}&location.latitude=${request.query.data.latitude}&location.longitude=${request.query.data.longitude}`;
+
+        return superagent.get(url)
+          .then(eventResults => {
+            console.log('events from API');
+            if (!eventResults.body.events.length) { throw 'NO DATA'; }
+            else {
+              const eventSummaries = eventResults.body.events.map( events => {
+                let summary = new Event(events);
+                summary.id = query;
+
+                let newSql = `INSERT INTO events (link, name, summary, event_date, location_id) VALUES($1, $2, $3, $4, $5);`;
+                let newValues = Object.values(summary);
+                console.log(newValues);
+                client.query(newSql, newValues);
+                return summary;
+              });
+              response.send(eventSummaries);
+            }
+          })
+          .catch(err => handleError(err, response));
+      }
+    });
+
+  // const url = `https://www.eventbriteapi.com/v3/events/search/?token=${process.env.EVENTBRITE_API_KEY}&location.latitude=${request.query.data.latitude}&location.longitude=${request.query.data.longitude}`;
+  // superagent.get(url)
+  //   .then(result => {
+  //     const eventSummaries = result.body.events.map(events => new Event(events));
+  //     console.log(eventSummaries)
+  //     response.send(eventSummaries);
+  //   })
+  //   .catch(err => handleError(err, response));
 }
 
 function Event(event) {
