@@ -24,7 +24,7 @@ CREATE TABLE weathers (
   FOREIGN KEY (location_id) REFERENCES locations (id)
 );
 
-Create Table events (
+CREATE TABLE events (
   id SERIAL PRIMARY KEY,
   link VARCHAR(255),
   name VARCHAR(255),
