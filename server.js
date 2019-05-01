@@ -28,25 +28,26 @@ app.listen(PORT, ()=>console.log(`city explorer back end Listening on PORT ${POR
 
 function searchToLatLong(request, response){
   let query = request.query.data;
-
+  console.log('line31*******************','query=', query, 'request=', request, 'request.query.data=', request.query.data, '*************************'); //seattle
+  // query is city --  request is a bunch of info
   // define the search
 
   let sql = `SELECT * FROM locations WHERE search_query=$1;`;
   let values = [query]; //always array
-  console.log('line 67', sql, values);
+  console.log('line 37*******************', 'sql=',sql, 'values=',values, '**********************');
 
   //make the query fo the database
   client.query(sql, values)
     .then (result => {
       // did the db return any info?
-      console.log('result from Database', result.rowCount);
+      console.log('line 43********************','result from Database=', result.rowCount, '********************'); // =0 if empty
       if (result.rowCount > 0) {
         response.send(result.rows[0]);
       }else {
-        console.log('results', result.rows);
+        console.log('line 47**********************','results=', result.rows, '**************************');
         //otherwise go get the data from the api
         const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${request.query.data}&key=${process.env.GEOCODE_API_KEY}`;
-        console.log(url);
+        console.log('************************line 50','url=', url);
         superagent.get(url)
 
 
@@ -88,7 +89,7 @@ function getWeather(request, response) {
   client.query(sql, values)
     .then (result => {
       if (result.rowCount > 0) {
-        console.log('Weather from SQL');
+        console.log('line 92**********','Weather from SQL', 'results.rows=', result.rows);
         response.send(result.rows);
 
 
@@ -97,7 +98,7 @@ function getWeather(request, response) {
 
         return superagent.get(url)
           .then(weatherResults => {
-            console.log('weather from API');
+            console.log('line 101 ****************','weather from API', '*********************');
             if (!weatherResults.body.daily.data.length) { throw 'NO DATA'; }
             else {
               const weatherSummaries = weatherResults.body.daily.data.map( day => {
@@ -106,7 +107,7 @@ function getWeather(request, response) {
 
                 let newSql = `INSERT INTO weathers (forecast, time, location_id) VALUES($1, $2, $3);`;
                 let newValues = Object.values(summary);
-                console.log(newValues);
+                console.log('line 110 *****************', 'newValues=',newValues, '************************');
                 client.query(newSql, newValues);
                 return summary;
               });
@@ -131,7 +132,7 @@ function getEvent(request, response) {
   client.query(sql, values)
     .then (result => {
       if (result.rowCount > 0) {
-        console.log('events from SQL');
+        console.log('line 135**********************','events from SQL', 'result.rows=', result.rows, '**********************');
         response.send(result.rows);
 
 
